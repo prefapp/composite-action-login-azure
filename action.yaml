@@ -11,19 +11,23 @@ inputs:
     required: true
   cluster-name:  
     required: true
+  repository-name:
+    required: true
 outputs:
   random-number:
     description: "Random number"
     value: ${{ steps.random-number-generator.outputs.random-id }}
+  helmfile-creds:
+    value: ${{ steps.set-helmfile.outputs.creds }}
+    
 runs:
   using: "composite"
   steps:
     - run: echo Hello ${{ inputs.who-to-greet }}.
       shell: bash
+
     - id: random-number-generator
       run: echo "::set-output name=random-id::$(echo $RANDOM)"
-      shell: bash
-    - run: ${{ github.action_path }}/goodbye.sh
       shell: bash
 
     - name: AZURE Setup / Azure Login
@@ -37,3 +41,7 @@ runs:
         creds: ${{ inputs.creds }}
         resource-group: ${{ inputs.resource-group }}
         cluster-name: ${{ inputs.cluster-name }}
+    - id: set-helmfile
+      run: |
+        export HELMFILE_CREDS=$(az acr login --name ${{ inputs.cluster-name }} --expose-token --output tsv --query accessToken)
+        echo "::set-output name=creds::$(echo $HELMFILE_CREDS)"
