@@ -1,10 +1,6 @@
-name: 'Hello World'
-description: 'Greet someone'
+name: 'Login azure'
+description: 'Log into azure for a kubernetes deployment using helmfile'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
   creds:  
     required: true
   resource-group:  
@@ -14,21 +10,12 @@ inputs:
   repository-name:
     required: true
 outputs:
-  random-number:
-    description: "Random number"
-    value: ${{ steps.random-number-generator.outputs.random-id }}
   helmfile-creds:
     value: ${{ steps.set-helmfile.outputs.creds }}
     
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
-      shell: bash
-
-    - id: random-number-generator
-      run: echo "::set-output name=random-id::$(echo $RANDOM)"
-      shell: bash
 
     - name: AZURE Setup / Azure Login
       uses: Azure/login@v1
