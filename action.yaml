@@ -5,6 +5,12 @@ inputs:
     description: 'Who to greet'
     required: true
     default: 'World'
+  creds:  
+    required: true
+  resource-group:  
+    required: true
+  cluster-name:  
+    required: true
 outputs:
   random-number:
     description: "Random number"
@@ -19,3 +25,15 @@ runs:
       shell: bash
     - run: ${{ github.action_path }}/goodbye.sh
       shell: bash
+
+    - name: AZURE Setup / Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ inputs.creds }}
+      
+    - name: AZURE Setup / AKS Context
+      uses: azure/aks-set-context@v1
+      with:
+        creds: ${{ inputs.creds }}
+        resource-group: ${{ inputs.resource-group }}
+        cluster-name: ${{ inputs.cluster-name }}
