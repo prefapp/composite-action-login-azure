@@ -27,9 +27,9 @@ runs:
       shell: bash
 
     - name: AZURE Setup / Azure Login
-        uses: Azure/login@v1
-        with:
-          creds: ${{ inputs.creds }}
+      uses: Azure/login@v1
+      with:
+        creds: ${{ inputs.creds }}
       
     - name: AZURE Setup / AKS Context
       uses: azure/aks-set-context@v1
