@@ -44,5 +44,5 @@ runs:
     - id: set-helmfile
       shell: bash
       run: |
-        export HELMFILE_CREDS=$(az acr login --name ${{ inputs.cluster-name }} --expose-token --output tsv --query accessToken)
+        export HELMFILE_CREDS=$(az acr login --name ${{ inputs.repository-name }} --expose-token --output tsv --query accessToken)
         echo "::set-output name=creds::$(echo $HELMFILE_CREDS)"
