@@ -10,31 +10,70 @@ inputs:
   subscription_id:
     description: 'Azure subscription id'
     required: true
-  repository_name:
-    description: 'Azure container registry name'
+  repositories_file:
+    description: 'Path to the repositories file'
     required: true
+    default: 'kubernetes/repositories.yaml'
 outputs:
   helm_registry_token:
     description: 'Helm registry token'
     value: ${{ steps.get-helm-token.outputs.helm_registry_token }}
-    
 runs:
   using: "composite"
   steps:
-
     - name: Configure Azure Credentials
       uses: azure/login@v2
       with:
         client-id: ${{ inputs.client_id }}
         tenant-id: ${{ inputs.tenant_id }}
-        subscription-id: ${{ inputs.subscription_id }}    
+        subscription-id: ${{ inputs.subscription_id }} 
 
-    - name: Get Helm Registry Token
-      id: get-helm-token
+    - run: npm install -g yaml@2.7.0
       shell: bash
+
+    - uses: actions/github-script@v7
       env:
-        ACR_NAME: ${{ inputs.repository_name }}
-      run: |
-        USER_NAME="00000000-0000-0000-0000-000000000000"
-        PASSWORD=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
-        echo "helm_registry_token=$PASSWORD" >> $GITHUB_OUTPUT
+        REPOSITORIES_FILE: ${{ inputs.repositories_file }}
+      with:
+        script: |
+          const yaml = require('yaml');
+          const execSync = require("child_process").execSync;
+          const path = require('path');
+
+          const { REPOSITORIES_FILE } = process.env;
+          const output = fs.readFileSync(REPOSITORIES_FILE, 'utf8');
+          const { repositories } = yaml.parse(output);
+          
+          for(const repo of repositories.filter(repo => repo.oci === true)) {
+              
+              const acrLoginCmd = [
+
+                "az",  "acr", "login", 
+                "--name",  repo.url, 
+                "--expose-token", 
+                "--output",  "tsv", 
+                "--query",  "accessToken"
+              
+              ].join(' ');
+
+              console.info(`logging into  az acr ${repo.url}`)
+              console.log(`command: ${acrLoginCmd}`);
+              const token = execSync(acrLoginCmd);
+              console.info(`logged into  az acr ${repo.url}`)
+
+              const helmLoginCmd = [
+
+                "helm", "registry", "login", 
+                repo.url, 
+                "--username", "00000000-0000-0000-0000-000000000000", 
+                "--password", token
+              
+              ].join(' ');
+
+              console.info(`logging into  helm registry ${repo.url}`)
+              console.log(`command: ${helmLoginCmd}`);
+              execSync(helmLoginCmd);
+              console.info(`logged into  helm registry ${repo.url}`)
+        
+          }
+          
