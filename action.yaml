@@ -56,24 +56,22 @@ runs:
               
               ].join(' ');
 
-              console.info(`logging into  az acr ${repo.url}`)
+              console.info(`logging into  az acr ${repo.url}`);
               console.log(`command: ${acrLoginCmd}`);
-              const token = execSync(acrLoginCmd);
-              console.info(`logged into  az acr ${repo.url}`)
+              const token = execSync(acrLoginCmd).toString();
+              console.info(`logged into  az acr ${repo.url}`);
 
               const helmLoginCmd = [
-
                 "helm", "registry", "login", 
                 repo.url, 
                 "--username", "00000000-0000-0000-0000-000000000000", 
                 "--password", token
-              
               ].join(' ');
 
-              console.info(`logging into  helm registry ${repo.url}`)
+              console.info(`logging into  helm registry ${repo.url}`);
               console.log(`command: ${helmLoginCmd}`);
               execSync(helmLoginCmd);
-              console.info(`logged into  helm registry ${repo.url}`)
+              console.info(`logged into helm registry ${repo.url}`);
         
           }
           
