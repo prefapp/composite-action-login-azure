@@ -1,35 +1,40 @@
 name: 'Login azure'
 description: 'Log into azure for a kubernetes deployment using helmfile'
 inputs:
-  creds:  
+  client_id:  
+    description: 'Azure client id'
     required: true
-  resource-group:  
+  tenant_id:
+    description: 'Azure tenant id'  
     required: true
-  cluster-name:  
+  subscription_id:
+    description: 'Azure subscription id'
     required: true
-  repository-name:
+  repository_name:
+    description: 'Azure container registry name'
     required: true
 outputs:
-  helmfile-creds:
-    value: ${{ steps.set-helmfile.outputs.creds }}
+  helm_registry_token:
+    description: 'Helm registry token'
+    value: ${{ steps.get-helm-token.outputs.helm_registry_token }}
     
 runs:
   using: "composite"
   steps:
 
-    - name: AZURE Setup / Azure Login
-      uses: Azure/login@v1
+    - name: Configure Azure Credentials
+      uses: azure/login@v2
       with:
-        creds: ${{ inputs.creds }}
-      
-    - name: AZURE Setup / AKS Context
-      uses: azure/aks-set-context@v1
-      with:
-        creds: ${{ inputs.creds }}
-        resource-group: ${{ inputs.resource-group }}
-        cluster-name: ${{ inputs.cluster-name }}
-    - id: set-helmfile
+        client-id: ${{ inputs.client_id }}
+        tenant-id: ${{ inputs.tenant_id }}
+        subscription-id: ${{ inputs.subscription_id }}    
+
+    - name: Get Helm Registry Token
+      id: get-helm-token
       shell: bash
+      env:
+        ACR_NAME: ${{ inputs.repository_name }}
       run: |
-        export HELMFILE_CREDS=$(az acr login --name ${{ inputs.repository-name }} --expose-token --output tsv --query accessToken)
-        echo "::set-output name=creds::$(echo $HELMFILE_CREDS)"
+        USER_NAME="00000000-0000-0000-0000-000000000000"
+        PASSWORD=$(az acr login --name $ACR_NAME --expose-token --output tsv --query accessToken)
+        echo "helm_registry_token=$PASSWORD" >> $GITHUB_OUTPUT
